@@ -1,0 +1,66 @@
+[project]
+name = "cardlister"
+version = "0.1.0"
+description = "Turn photos of Pokémon cards into priced eBay listings, with a human review gate."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Turner Luke", email = "turnermluke@gmail.com" }]
+
+dependencies = [
+    "alembic>=1.13",
+    "anthropic>=0.49",
+    "cryptography>=42",
+    "fastapi>=0.115",
+    "httpx>=0.27",
+    "jinja2>=3.1",
+    "numpy>=1.26",
+    "pillow>=10.3",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "python-multipart>=0.0.9",
+    "sqlalchemy>=2.0",
+    "typer>=0.12",
+    "uvicorn[standard]>=0.30",
+]
+
+[project.scripts]
+cardlister = "cardlister.cli:app"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.10",
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+    "respx>=0.21",
+    "ruff>=0.5",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cardlister"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+extend-exclude = ["migrations/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "C4"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["src", "tests"]
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "e2e: end-to-end tests that hit the eBay sandbox (require sandbox credentials)",
+]

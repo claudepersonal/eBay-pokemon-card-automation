@@ -1,33 +1,48 @@
-# eBay_Pokemon_Card_Automation
-A Python program to automate the listing of Pokemon cards to eBay. Utilizes the ebaysdk-python eBay API from timotheus, linked here: https://github.com/timotheus/ebaysdk-python
-Download this repository and place in the directory to use.
+# cardlister
 
-Listing Pokemon cards to eBay is a repetitve, time consuming, and mindless task. The workflow for doing so is as follows:
+Turn photos of Pokémon cards into priced eBay listings, with a human review gate.
 
-(Approximately 15 minutes)
-1. Select a card
-2. Search the cards name and identifier number on eBay, view previously sold listings
-3. Note the successful listing's title and price
-4. Take high-quality images of the front and back of the card
-5. Load these images onto your computer
-6. Orient the images properly
-7. Crop the images
-8. List the images manually
-- Paste the title
-- Paste the previously successful price
-- Paste a disclaimer about quality (since I am not professionally minting these cards)
-- Battle with eBay's UI to properly denote these listings as Pokemon cards
+Drop each card's photos into its own folder, and cardlister will identify the card
+(Claude vision), draft an eBay listing title and item specifics, suggest a price from
+recent comps, and let you review and confirm every card in a local web UI before it
+publishes anything to eBay.
 
-Using this program, the automated workflow is as follows:
-(Approximately 3 minutes)
-1. Select a card
-2. Search the cards name and identifier number on eBay, view previously sold listings
-3. Note the successful listing's title and price, paste them in a local excel file
-4. Take high-quality images of the front and back of the card
-5. Load these images onto your computer, place them in a designated folder
-6. Run the local Python program
+## The problem it solves
 
+Listing ungraded Pokémon singles on eBay is repetitive: research the card, price it
+from sold comps, photograph it, crop the images, and fill out eBay's listing form.
+cardlister automates the mechanical parts and keeps a human confirmation gate so you
+never list the wrong card at the wrong price:
 
-This use of this program to list hundreds of cards has the potential to save 10s of hours for the user.
+1. **You** photograph each card and drop its photos in a per-card folder.
+2. cardlister **identifies** the card and **drafts** the title + item specifics.
+3. cardlister **prices** it from recent eBay comps.
+4. **You review and confirm** each card in the browser.
+5. cardlister **lists** it via eBay's modern REST Sell APIs.
 
-![Flowchart](https://github.com/turnerluke/eBay-pokemon-card-automation/blob/main/eBay%20Automation%20Flowchart.png)
+## How it's built
+
+- **eBay REST Sell APIs + OAuth2** (Inventory / Account / Media) — managed-payments
+  compatible, unlike the legacy Trading API.
+- **Per-card folders** — nothing is coupled by file order, so a misnamed photo can't
+  list the wrong image on the wrong card.
+- **Claude vision** drafts each listing; **you confirm** in a local web UI.
+- Local SQLite state, idempotent/resumable pipeline (the card's eBay **SKU** is the
+  idempotency key), secrets in `.env`, OAuth refresh tokens encrypted at rest.
+
+## Setup
+
+Requires [uv](https://docs.astral.sh/uv/).
+
+```sh
+uv sync                 # install dependencies into .venv
+cp .env.example .env    # then fill in eBay + Anthropic credentials
+uv run cardlister --help
+```
+
+See `.env.example` for the full list of configuration variables.
+
+## Status
+
+Under active development. See `docs` / the implementation plan for the phased roadmap:
+domain core → eBay sandbox listing → pricing comps → vision identification → web UI.
