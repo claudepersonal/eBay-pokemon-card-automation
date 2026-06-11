@@ -120,6 +120,29 @@ def ingest(
 
 
 @app.command()
+def status() -> None:
+    """List all cards with their state, title, and price."""
+    settings = get_settings()
+    database = _open_database(settings)
+    with database.session() as session:
+        cards = list(CardRepository(session).list_cards())
+        rows = [
+            (
+                card.sku,
+                card.state.value,
+                str(card.confirmed_price or card.suggested_price or "-"),
+                card.title or card.display_name or "",
+            )
+            for card in cards
+        ]
+    if not rows:
+        typer.echo("No cards. Run `cardlister ingest <dir>`.")
+        return
+    for sku, state, price, title in rows:
+        typer.echo(f"  {sku:<40} {state:<11} {price:>8}  {title}")
+
+
+@app.command()
 def crop(
     sku: Annotated[
         str | None, typer.Argument(help="Crop one card by SKU. Omit to crop all cards.")
