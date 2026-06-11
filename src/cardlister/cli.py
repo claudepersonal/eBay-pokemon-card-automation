@@ -18,13 +18,20 @@ from cardlister.domain.states import CardState
 from cardlister.ebay.account import verify_account
 from cardlister.ebay.errors import EbayError
 from cardlister.ebay.oauth import OAuthManager
-from cardlister.factory import build_app_client, build_oauth_manager, build_user_client
+from cardlister.factory import (
+    build_app_client,
+    build_card_identifier,
+    build_oauth_manager,
+    build_user_client,
+)
 from cardlister.listing_text import default_description
 from cardlister.logging import configure_logging
 from cardlister.pipeline.crop import crop_card_photos
+from cardlister.pipeline.identify import identify_card
 from cardlister.pipeline.ingest import ingest_root
 from cardlister.pipeline.list_card import list_card
 from cardlister.pipeline.price import PricingError, price_card
+from cardlister.vision.claude_client import VisionError
 
 app = typer.Typer(
     help="Turn photos of Pokémon cards into priced eBay listings, with a human review gate.",
@@ -174,6 +181,36 @@ def review(
         }
         _advance_to_reviewed(repo, card)
     typer.echo(f"{sku} is reviewed: {title} @ {amount} {settings.ebay_marketplace_id}")
+
+
+@app.command()
+def identify(
+    sku: Annotated[
+        str | None, typer.Argument(help="Identify one card by SKU. Omit to identify all.")
+    ] = None,
+) -> None:
+    """Identify cards from their photos with Claude vision and draft listing fields."""
+    settings = get_settings()
+    database = _open_database(settings)
+    identifier = build_card_identifier(settings)
+
+    with database.session() as session:
+        repo = CardRepository(session)
+        cards = [_require_card(repo, sku)] if sku else list(repo.list_cards())
+        results: list[tuple[str, str, float]] = []
+        for card in cards:
+            try:
+                identification = identify_card(repo, card, identifier)
+            except VisionError as exc:
+                typer.echo(f"  {card.sku}: skipped ({exc})")
+                continue
+            results.append(
+                (card.sku, identification.suggested_title, identification.confidence)
+            )
+
+    for card_sku, title, confidence in results:
+        typer.echo(f"  {card_sku}: {title}  (confidence {confidence:.2f})")
+    typer.echo(f"Identified {len(results)} card(s).")
 
 
 @app.command()

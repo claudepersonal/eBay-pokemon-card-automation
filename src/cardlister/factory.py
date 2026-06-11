@@ -6,6 +6,7 @@ from cardlister.config import ConfigError, EbayEnv, Settings
 from cardlister.db.base import Database
 from cardlister.ebay.client import EbayClient
 from cardlister.ebay.oauth import OAuthManager, TokenEncryptor, TokenStore
+from cardlister.vision.claude_client import AnthropicCardIdentifier, CardIdentifier
 
 
 def build_token_store(settings: Settings, database: Database) -> TokenStore:
@@ -33,3 +34,11 @@ def build_user_client(manager: OAuthManager) -> EbayClient:
 def build_app_client(manager: OAuthManager) -> EbayClient:
     """A client authenticated with the application token (Browse)."""
     return EbayClient(manager.env, manager.app_token)
+
+
+def build_card_identifier(settings: Settings) -> CardIdentifier:
+    key = settings.anthropic_api_key
+    return AnthropicCardIdentifier(
+        api_key=key.get_secret_value() if key else None,
+        model=settings.vision_model,
+    )
