@@ -68,6 +68,10 @@ class Settings(BaseSettings):
     ebay_category_id: str = "183454"
     origin_postal_code: str = "54007"
 
+    # Sold comps via Marketplace Insights require special eBay approval; off by default,
+    # in which case pricing falls back to active-listing stats from the Browse API.
+    ebay_use_insights: bool = False
+
     anthropic_api_key: SecretStr | None = None
     vision_model: str = "claude-haiku-4-5"
 

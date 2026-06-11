@@ -18,12 +18,13 @@ from cardlister.domain.states import CardState
 from cardlister.ebay.account import verify_account
 from cardlister.ebay.errors import EbayError
 from cardlister.ebay.oauth import OAuthManager
-from cardlister.factory import build_oauth_manager, build_user_client
+from cardlister.factory import build_app_client, build_oauth_manager, build_user_client
 from cardlister.listing_text import default_description
 from cardlister.logging import configure_logging
 from cardlister.pipeline.crop import crop_card_photos
 from cardlister.pipeline.ingest import ingest_root
 from cardlister.pipeline.list_card import list_card
+from cardlister.pipeline.price import PricingError, price_card
 
 app = typer.Typer(
     help="Turn photos of Pokémon cards into priced eBay listings, with a human review gate.",
@@ -173,6 +174,36 @@ def review(
         }
         _advance_to_reviewed(repo, card)
     typer.echo(f"{sku} is reviewed: {title} @ {amount} {settings.ebay_marketplace_id}")
+
+
+@app.command()
+def price(
+    sku: Annotated[str, typer.Argument(help="SKU of an identified card to price.")],
+    env: Annotated[EbayEnv | None, typer.Option(help="Override CARDLISTER_EBAY_ENV.")] = None,
+    limit: Annotated[int, typer.Option(help="Number of comps to fetch.")] = 20,
+) -> None:
+    """Suggest a price for a card from recent eBay comps."""
+    settings = get_settings()
+    database = _open_database(settings)
+    manager = _manager(settings, database, env)
+    client = build_app_client(manager)
+
+    with database.session() as session:
+        repo = CardRepository(session)
+        card = _require_card(repo, sku)
+        try:
+            summary = price_card(repo, card, client, settings, limit=limit)
+        except PricingError as exc:
+            raise typer.BadParameter(str(exc)) from exc
+
+    if summary is None:
+        typer.echo(f"No comps found for {sku}.")
+        return
+    typer.echo(
+        f"{sku}: suggested {summary.suggested} "
+        f"({summary.method} of {summary.sample_size} comps; "
+        f"range {summary.low}-{summary.high})"
+    )
 
 
 @auth_app.command("login")
