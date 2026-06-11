@@ -29,6 +29,11 @@ class EbayEnv(enum.StrEnum):
     def auth_host(self) -> str:
         return "auth.sandbox.ebay.com" if self is EbayEnv.SANDBOX else "auth.ebay.com"
 
+    @property
+    def view_host(self) -> str:
+        """Host for the public listing URL shown to the seller."""
+        return "www.sandbox.ebay.com" if self is EbayEnv.SANDBOX else "www.ebay.com"
+
 
 @dataclass(frozen=True)
 class EbayCredentials:

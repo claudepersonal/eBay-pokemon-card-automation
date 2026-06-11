@@ -7,8 +7,10 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from cryptography.fernet import Fernet
 from PIL import Image
 
+from cardlister.config import EbayEnv, Settings
 from cardlister.db.base import Database
 from cardlister.db.repository import CardRepository
 
@@ -24,6 +26,20 @@ def database() -> Iterator[Database]:
 def repo(database: Database) -> Iterator[CardRepository]:
     with database.session() as session:
         yield CardRepository(session)
+
+
+@pytest.fixture
+def settings(tmp_path: Path) -> Settings:
+    """Settings with dummy sandbox eBay credentials and a real Fernet key."""
+    return Settings(
+        _env_file=None,
+        ebay_env=EbayEnv.SANDBOX,
+        ebay_sandbox_app_id="APP-ID",
+        ebay_sandbox_cert_id="CERT-ID",
+        ebay_sandbox_ru_name="cardlister-RuName",
+        token_encryption_key=Fernet.generate_key().decode(),
+        data_dir=tmp_path / "data",
+    )
 
 
 def _write_card_image(path: Path, *, landscape: bool = False) -> None:
