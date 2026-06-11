@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Preview · {{ card.sku }}{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <a href="/cards/{{ card.id }}" class="text-sm text-slate-500 hover:underline">← back to card</a>
+</div>
+<h1 class="text-xl font-semibold mb-2">Dry-run preview</h1>
+<p class="text-sm text-slate-500 mb-4">
+  Exactly what would be sent to eBay. Policy IDs and the inventory location are filled in
+  from your account at list time. Nothing is sent from this page.
+</p>
+
+{% if error %}
+  <div class="rounded bg-red-100 text-red-800 px-4 py-2">{{ error }}</div>
+{% else %}
+  <h2 class="font-semibold mt-2 mb-1">Inventory item (PUT /inventory_item/{{ card.sku }})</h2>
+  <pre class="bg-slate-900 text-slate-100 rounded p-3 text-xs overflow-auto">{{ inventory_item | tojson(indent=2) }}</pre>
+
+  <h2 class="font-semibold mt-4 mb-1">Offer (POST /offer)</h2>
+  <pre class="bg-slate-900 text-slate-100 rounded p-3 text-xs overflow-auto">{{ offer | tojson(indent=2) }}</pre>
+{% endif %}
+{% endblock %}

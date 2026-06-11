@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}cardlister{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+</head>
+<body class="bg-slate-100 text-slate-800">
+  <header class="bg-slate-900 text-white">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="/cards" class="text-lg font-semibold">cardlister</a>
+      <span class="text-sm text-slate-300">Pokémon card → eBay listing, with a review gate</span>
+    </div>
+  </header>
+  <main class="max-w-5xl mx-auto px-4 py-6">
+    {% if msg %}
+      <div class="mb-4 rounded bg-green-100 text-green-800 px-4 py-2">{{ msg }}</div>
+    {% endif %}
+    {% if err %}
+      <div class="mb-4 rounded bg-red-100 text-red-800 px-4 py-2">{{ err }}</div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

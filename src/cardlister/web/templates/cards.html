@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Cards · cardlister{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-semibold mb-4">Cards</h1>
+
+{% set badge = {
+  "ingested": "bg-slate-200 text-slate-700",
+  "identified": "bg-blue-100 text-blue-700",
+  "priced": "bg-indigo-100 text-indigo-700",
+  "reviewed": "bg-amber-100 text-amber-800",
+  "listing": "bg-purple-100 text-purple-700",
+  "listed": "bg-green-100 text-green-700",
+  "failed": "bg-red-100 text-red-700",
+} %}
+
+{% if not cards %}
+  <p class="text-slate-500">No cards yet. Run <code>cardlister ingest &lt;dir&gt;</code>.</p>
+{% else %}
+<div class="grid gap-3">
+  {% for card in cards %}
+  <a href="/cards/{{ card.id }}"
+     class="flex items-center gap-4 bg-white rounded-lg shadow-sm hover:shadow p-3">
+    {% set front = card.photos|selectattr('role.value', 'equalto', 'front')|first %}
+    {% set thumb = front or (card.photos|first) %}
+    {% if thumb %}
+      <img src="/photos/{{ thumb.id }}" alt="" class="w-16 h-20 object-cover rounded border">
+    {% else %}
+      <div class="w-16 h-20 rounded border bg-slate-100"></div>
+    {% endif %}
+    <div class="flex-1 min-w-0">
+      <div class="font-medium truncate">{{ card.title or card.display_name or card.sku }}</div>
+      <div class="text-sm text-slate-500">{{ card.sku }}</div>
+      {% if card.identification_confidence is not none and card.identification_confidence < 0.6 %}
+        <span class="text-xs text-red-600">⚠ low confidence — needs a look</span>
+      {% endif %}
+    </div>
+    <div class="text-right">
+      <div class="text-sm">
+        {% if card.confirmed_price %}${{ card.confirmed_price }}
+        {% elif card.suggested_price %}~${{ card.suggested_price }}
+        {% else %}<span class="text-slate-400">no price</span>{% endif %}
+      </div>
+      <span class="inline-block mt-1 text-xs px-2 py-0.5 rounded {{ badge.get(card.state.value, 'bg-slate-200') }}">
+        {{ card.state.value }}
+      </span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

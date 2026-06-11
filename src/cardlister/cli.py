@@ -299,6 +299,20 @@ def account(
         raise typer.Exit(code=1)
 
 
+@app.command()
+def serve(
+    host: Annotated[str, typer.Option(help="Host to bind.")] = "127.0.0.1",
+    port: Annotated[int, typer.Option(help="Port to bind.")] = 8000,
+) -> None:
+    """Run the local web review UI."""
+    import uvicorn
+
+    from cardlister.web.app import create_app
+
+    typer.echo(f"cardlister review UI at http://{host}:{port}")
+    uvicorn.run(create_app(get_settings()), host=host, port=port)
+
+
 @app.command(name="list")
 def list_cmd(
     sku: Annotated[str, typer.Argument(help="SKU of a reviewed card to list.")],
